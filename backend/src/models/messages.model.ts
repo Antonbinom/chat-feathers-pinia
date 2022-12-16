@@ -1,4 +1,4 @@
-// users-model.ts - A mongoose model
+// message-model.ts - A mongoose model
 //
 // See http://mongoosejs.com/docs/models.html
 // for more of what you can do here.
@@ -6,13 +6,11 @@ import { Application } from '../declarations';
 import { Model, Mongoose } from 'mongoose';
 
 export default function (app: Application): Model<any> {
-  const modelName = 'users';
+  const modelName = 'message';
   const mongooseClient: Mongoose = app.get('mongooseClient');
   const schema = new mongooseClient.Schema({
-    name: { type: String, require: true },
-    email: { type: String, unique: true, lowercase: true },
-    password: { type: String },
-
+    // name: { type: String, require: true },
+    text: { type: String },
   }, {
     timestamps: true
   });
