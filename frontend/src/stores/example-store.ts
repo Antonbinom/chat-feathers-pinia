@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-export const useCounterStore = defineStore('counter', {
+export const useChatMessages = defineStore('messages', {
   state: () => ({
     counter: 0,
   }),

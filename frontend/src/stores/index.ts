@@ -35,4 +35,8 @@ export default store((/* { ssrContext } */) => {
 export const { defineStore, BaseModel } = setupFeathersPinia({
   clients: { api },
   idField: 'id',
+  whitelist: [
+    '$limit',
+    '$paginate',
+  ],
 })

@@ -8,11 +8,12 @@ import { Model, Mongoose } from 'mongoose';
 export default function (app: Application): Model<any> {
   const modelName = 'users';
   const mongooseClient: Mongoose = app.get('mongooseClient');
-  const schema = new mongooseClient.Schema({
+  const { Schema } = mongooseClient;
+  const schema = new Schema({
     name: { type: String, require: true },
     email: { type: String, unique: true, lowercase: true },
     password: { type: String },
-
+    messages: [{ type: Schema.Types.ObjectId, ref: 'messages' }]
   }, {
     timestamps: true
   });

@@ -34,7 +34,7 @@ q-page.row.wrap.justify-evenly.q-pa-lg
       clearable
     )
     div
-      q-btn(label='Submit', type='submit', color='primary')
+      q-btn(label='Отправить', type='submit', color='primary')
 
   q-form.q-gutter-md(
     v-if='loginUserMenu & !isUserAuth',
@@ -57,7 +57,7 @@ q-page.row.wrap.justify-evenly.q-pa-lg
       clearable
     )
     div
-      q-btn(label='Submit', type='submit', color='primary')
+      q-btn(label='Войти', type='submit', color='primary')
 
   ChatComponent(v-if='isUserAuth')
 </template>
@@ -69,7 +69,6 @@ import ChatComponent from 'src/components/ChatComponent.vue';
 // Stores
 const usersStore = useUsers();
 const authStore = useAuth();
-
 //
 
 export default {
@@ -82,10 +81,11 @@ export default {
         password: '',
       },
       createUserMenu: false,
-      loginUserMenu: false,
+      loginUserMenu: true,
       isUserAuth: false,
     };
   },
+
   // Computed
   computed: {
     getAuthUser() {
@@ -105,8 +105,8 @@ export default {
       this.loginUserMenu = true;
     },
     onLogout() {
-      this.createUserMenu = false;
-      this.loginUserMenu = true;
+      authStore.logout();
+      this.isUserAuth = false;
     },
     clearUserData() {
       this.userData.name = '';
@@ -120,17 +120,29 @@ export default {
       const newUser = await user.save();
       this.isUserAuth = true;
       this.authUser();
+      this.clearUserData();
     },
 
     async authUser() {
-      const authRes = await authStore.authenticate({
+      await authStore.authenticate({
         strategy: 'local',
         email: this.userData.email,
         password: this.userData.password,
       });
       this.isUserAuth = true;
+      this.clearUserData();
     },
   },
   //
+
+  async beforeMount() {
+    if (localStorage.getItem('feathers-jwt')) {
+      await authStore.authenticate({
+        strategy: 'jwt',
+        accessToken: localStorage.getItem('feathers-jwt'),
+      });
+      this.isUserAuth = true;
+    }
+  },
 };
 </script>

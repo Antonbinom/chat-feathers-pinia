@@ -15,6 +15,10 @@ export const useAuth = defineAuthStore({
   },
 
   actions: {
+    logout() {
+      localStorage.removeItem('feathers-jwt');
+      this.userId = null;
+    },
     handleResponse(response: any) {
       this.userId = response.user.id || response.user._id
       User.addToStore(response.user)
