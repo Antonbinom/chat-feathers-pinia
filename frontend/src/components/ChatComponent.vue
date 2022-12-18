@@ -15,16 +15,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useMessages } from 'src/stores/services/messages';
 import { useAuth } from 'src/stores/services/auth';
 
-// Stores
+// --- Stores ---
 const authStore = useAuth();
 const messagesStore = useMessages();
-//
 
-// Refs
+// --- Refs ---
 const messageData = ref({
   sender: authStore.getUser._id,
   text: '',
@@ -33,9 +32,8 @@ const messagesLimit = ref(15);
 const user = ref(messageData.value.sender);
 
 const chatScroll = ref();
-//
 
-// Computed
+// --- Computed ---
 const messagesItems = computed(() => {
   return messagesStore.findInStore({
     query: {
@@ -45,9 +43,8 @@ const messagesItems = computed(() => {
     },
   }).data;
 });
-//
 
-// Methods
+// --- Methods ---
 const sendMessage = async () => {
   const createMessage = messagesStore.Model;
   const message = new createMessage(messageData.value);
@@ -71,15 +68,13 @@ const onLoad = async (index, done) => {
         createdAt: -1,
       },
       $limit: messagesLimit.value,
-      paginate: {
-        default: 100,
-        max: 200,
-      },
+      // paginate: {
+      //   default: 100,
+      //   max: 200,
+      // },
     },
   });
   done();
   messagesLimit.value += 5;
-
-  //
 };
 </script>
