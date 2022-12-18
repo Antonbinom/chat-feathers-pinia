@@ -30,18 +30,18 @@ const messageData = ref({
 });
 const messagesLimit = ref(15);
 const user = ref(messageData.value.sender);
-
 const chatScroll = ref();
 
 // --- Computed ---
 const messagesItems = computed(() => {
-  return messagesStore.findInStore({
+  const { data } = messagesStore.findInStore({
     query: {
       $sort: {
         createdAt: 1,
       },
     },
-  }).data;
+  });
+  return data;
 });
 
 // --- Methods ---
@@ -68,13 +68,9 @@ const onLoad = async (index, done) => {
         createdAt: -1,
       },
       $limit: messagesLimit.value,
-      // paginate: {
-      //   default: 100,
-      //   max: 200,
-      // },
     },
   });
   done();
-  messagesLimit.value += 5;
+  messagesLimit.value += 15;
 };
 </script>
