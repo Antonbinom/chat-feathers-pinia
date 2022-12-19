@@ -30,7 +30,7 @@ const authStore = useAuth();
 const emit = defineEmits(['customChange']);
 
 // --- Refs ---
-const isUserAuth = ref(false);
+const isUserAuth = ref();
 const activeForm = ref('login');
 
 // --- Computed ---

@@ -15,6 +15,7 @@
     "@feathersjs/authentication-client": "^4.5.15",
     "@feathersjs/feathers": "^4.5.15",
     "@feathersjs/socketio-client": "^4.5.15",
+    "@multiavatar/multiavatar": "^1.0.7",
     "@quasar/extras": "^1.0.0",
     "add": "^2.0.6",
     "axios": "^0.21.1",
@@ -28,6 +29,8 @@
     "vue": "^3.0.0",
     "vue-i18n": "^9.2.2",
     "vue-router": "^4.0.0",
+    "vue-use-sound": "^1.1.1",
+    "vue3-emoji-picker": "^1.1.7",
     "yarn": "^1.22.19"
   },
   "devDependencies": {
