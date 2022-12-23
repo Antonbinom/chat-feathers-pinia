@@ -15,7 +15,8 @@ export default function (app: Application): Model<any> {
       ref: 'users',
       require: true,
     },
-    text: { type: String, required: true }
+    text: { type: String, required: true },
+    reactions: { type: Array },
   }, {
     timestamps: true
   });

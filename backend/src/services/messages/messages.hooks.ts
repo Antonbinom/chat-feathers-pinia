@@ -22,7 +22,12 @@ export default {
     get: [],
     create: [],
     update: [],
-    patch: [],
+    patch: [
+      // (ctx: any) => {
+      //   ctx.params.query.$populate = ['sender'];
+      //   return ctx;
+      // },
+    ],
     remove: []
   },
 

@@ -81,9 +81,7 @@ const createUser = () => {
 
 const authUser = () => {
   emit('authUser', userData.value);
-
   if (props.isUserAuth) clearUserData();
-  console.log(props.isUserAuth);
 };
 
 const clearUserData = () => {
