@@ -154,14 +154,14 @@ const onSelectEmoji = ({ i }) => {
   messageData.value.text += i;
 };
 
-const addReaction = async (i, r, userId) => {
+const addReaction = async (i, r) => {
   await messagesStore.patch(messageId.value, {
     $push: {
       reactions: {
         id: r,
         smile: i,
         count: 1,
-        users: [userId],
+        users: [authStore.getUser._id],
       },
     },
   });
@@ -181,22 +181,74 @@ const onSelectReactions = async ({ i, r }) => {
   const messageIndex = messagesItems.value.findIndex(
     (el) => el._id === messageId.value
   );
+  const { reactions } = messagesItems.value[messageIndex];
   // если в массиве есть реакции
-  if (messagesItems.value[messageIndex].reactions.length) {
-    // если в массиве уже находится эта реакция
-    if (messagesItems.value[messageIndex].reactions.find((el) => el.id === r)) {
-      // получаем его id
-      const currentReaction = messagesItems.value[messageIndex].reactions.find(
-        (el) => el.id === r
+  if (reactions.length) {
+    // проверяем на наличие userId в реакциях
+    const isUserId = reactions.some((item) =>
+      item.users.includes(authStore.getUser._id)
+    );
+    // если userId есть в реакциях
+    if (isUserId) {
+      // находим индекс реакции реакции
+      const reactionIndex = reactions.findIndex((item) =>
+        item.users.includes(authStore.getUser._id)
       );
-      if (currentReaction.users.includes(authStore.getUser._id)) return;
+      const { id, count, users } = reactions[reactionIndex];
+      // если больше одного
+      if (count > 1) {
+        // уменьшаем count на 1 и удаляем id юзера
+        const query = { 'reactions.id': id };
+        const itemIndex = users.indexOf(authStore.getUser._id);
+        users.splice(itemIndex, 1);
+        messagesStore.patch(
+          messageId.value,
+          {
+            'reactions.$.count': count - 1,
+            'reactions.$.users': users,
+          },
+          { query }
+        );
+        // если реакция равна 1 удаляем
+      } else if (count === 1) {
+        deleteReaction(id);
+      }
+      // если в массиве уже находится эта реакция
+      if (reactions.find((el) => el.id === r)) {
+        // получаем его id
+        const { users, count } = reactions.find((el) => el.id === r);
+        // если пользователь в массиве
+        if (users.includes(authStore.getUser._id)) return;
+        // пушим данные
+        const query = { 'reactions.id': r };
+        const usersArr = [...users, authStore.getUser._id];
+        await messagesStore.patch(
+          messageId.value,
+          {
+            'reactions.$.count': count + 1,
+            'reactions.$.users': usersArr,
+          },
+          { query }
+        );
+        // если такой реакции еще нет
+      } else {
+        // добавляем новый объект
+        await addReaction(i, r);
+      }
+    }
+    // если в массиве уже находится эта реакция
+    if (reactions.find((el) => el.id === r)) {
+      // получаем его id
+      const { users, count } = reactions.find((el) => el.id === r);
+      // если пользователь в массиве
+      if (users.includes(authStore.getUser._id)) return;
       // пушим данные
       const query = { 'reactions.id': r };
-      const usersArr = [...currentReaction.users, authStore.getUser._id];
+      const usersArr = [...users, authStore.getUser._id];
       await messagesStore.patch(
         messageId.value,
         {
-          'reactions.$.count': currentReaction.count + 1,
+          'reactions.$.count': count + 1,
           'reactions.$.users': usersArr,
         },
         { query }
@@ -204,52 +256,46 @@ const onSelectReactions = async ({ i, r }) => {
       // если такой реакции еще нет
     } else {
       // добавляем новый объект
-      await addReaction(i, r, authStore.getUser._id);
+      await addReaction(i, r);
     }
     // если вообще нет реакций
   } else {
     // добавляем новый объект
-    await addReaction(i, r, authStore.getUser._id);
+    await addReaction(i, r);
   }
   isReactionPicker.value = !isReactionPicker.value;
 };
 
 const onReactionButton = (id, reaction, reactionId, index) => {
   messageId.value = id;
-  // messageItem.value.reaction = reaction;
-  const reactionsItem = reaction[index];
-  console.log(reactionsItem);
-  // если в реакции есть id юзера
-  if (reactionsItem.users.includes(authStore.getUser._id)) {
-    if (reactionsItem.count > 1) {
+  const { users, count } = reaction[index];
+
+  if (users.includes(authStore.getUser._id)) {
+    if (count > 1) {
       // уменьшаем count на 1 и удаляем id юзера
       const query = { 'reactions.id': reactionId };
-      const itemIndex = reactionsItem.users.indexOf(authStore.getUser._id);
-      console.log(reactionsItem.users);
-      console.log(authStore.getUser._id);
-      console.log(itemIndex);
-      const usersArr = reactionsItem.users.splice(itemIndex, 1);
-
+      const itemIndex = users.indexOf(authStore.getUser._id);
+      users.splice(itemIndex, 1);
       messagesStore.patch(
         messageId.value,
         {
-          'reactions.$.count': reactionsItem.count - 1,
-          'reactions.$.users': usersArr,
+          'reactions.$.count': count - 1,
+          'reactions.$.users': users,
         },
         { query }
       );
       // если реакция равна 1 удаляем
-    } else if (reactionsItem.count === 1) {
+    } else if (count === 1) {
       deleteReaction(reactionId);
     }
     // если нет юзер id
   } else {
     const query = { 'reactions.id': reactionId };
-    const usersArr = [...reactionsItem.users, authStore.getUser._id];
+    const usersArr = [...users, authStore.getUser._id];
     messagesStore.patch(
       messageId.value,
       {
-        'reactions.$.count': reactionsItem.count + 1,
+        'reactions.$.count': count + 1,
         'reactions.$.users': usersArr,
       },
       { query }
@@ -258,7 +304,6 @@ const onReactionButton = (id, reaction, reactionId, index) => {
 };
 
 const onReactions = (e, id, reaction) => {
-  console.log(reaction);
   const targetClass = e.target.__vueParentComponent.attrs.class;
   if (
     targetClass.includes('add-reaction-img') ||
