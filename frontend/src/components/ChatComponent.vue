@@ -18,20 +18,20 @@
             .reactions-buttons
               q-btn.q-py-none.q-mr-sm(
                 v-for='(reaction, index) in message.reactions',
-                @click='onReactionButton(message._id, message.reactions, reaction.id, index)',
+                @click='onReactionButton(message._id, index)',
                 :key='reaction.id',
                 color='white',
                 text-color='black',
                 dense
               ) {{ `${reaction.smile} ${reaction.count}` }}
+
               q-btn.q-py-none.q-mr-sm.add-reaction(
-                @click='onReactions($event, message._id, message.reactions)',
+                @click='onReactions($event, message._id)',
                 color='transparent',
                 text-color='black',
                 dense
               )
                 q-img.add-reaction-img(src='../assets/smile-plus.svg')
-          pre {{ message.reactions }}
       EmojiPicker.reactions(
         v-if='isReactionPicker',
         @select='onSelectReactions',
@@ -211,24 +211,28 @@ const deleteReaction = async (id) => {
   });
 };
 
-const onSelectReactions = async ({ i, r }) => {
+const getVariables = () => {
   const messageIndex = messagesItems.value.findIndex(
     (el) => el._id === messageId.value
   );
   const { reactions } = messagesItems.value[messageIndex];
+  const isUserId = reactions.some((item) =>
+    item.users.includes(authStore.getUser._id)
+  );
+  const reactionIndex = reactions.findIndex((item) =>
+    item.users.includes(authStore.getUser._id)
+  );
+  return { reactions, isUserId, reactionIndex };
+};
+
+const onSelectReactions = async ({ i, r }) => {
+  const { reactions, isUserId, reactionIndex } = getVariables();
 
   if (!reactions.length) createReaction(i, r);
   else {
-    const isUserId = reactions.some((item) =>
-      item.users.includes(authStore.getUser._id)
-    );
-
     if (isUserId) {
-      const reactionIndex = reactions.findIndex((item) =>
-        item.users.includes(authStore.getUser._id)
-      );
       const reaction = reactions[reactionIndex];
-      const { id, count, users } = reactions[reactionIndex];
+      const { id, count } = reactions[reactionIndex];
 
       count > 1 ? removeReaction(reaction) : deleteReaction(id);
     }
@@ -240,33 +244,24 @@ const onSelectReactions = async ({ i, r }) => {
   isReactionPicker.value = !isReactionPicker.value;
 };
 
-const onReactionButton = (msgId, reaction, reactionId, index) => {
-  // messageId.value = msgId;
-  // const messageIndex = messagesItems.value.findIndex(
-  //   (el) => el._id === messageId.value
-  // );
-  // const { reactions } = messagesItems.value[messageIndex];
+const onReactionButton = (msgId, index) => {
+  messageId.value = msgId;
+  const { reactions, isUserId, reactionIndex } = getVariables();
 
-  const isUserId = reaction.some((item) =>
-    item.users.includes(authStore.getUser._id)
-  );
   if (isUserId) {
-    const reactionIndex = reaction.findIndex((item) =>
-      item.users.includes(authStore.getUser._id)
-    );
-    const currentReaction = reaction[reactionIndex];
-    const { id, users, count } = currentReaction;
+    const currentReaction = reactions[reactionIndex];
+    const { id, count } = currentReaction;
 
-    if (currentReaction === reaction[index]) {
+    if (currentReaction === reactions[index]) {
       count > 1 ? removeReaction(currentReaction) : deleteReaction(id);
     } else {
       count > 1 ? removeReaction(currentReaction) : deleteReaction(id);
-      addReaction(reaction[index]);
+      addReaction(reactions[index]);
     }
-  } else addReaction(reaction[index]);
+  } else addReaction(reactions[index]);
 };
 
-const onReactions = (e, id, reaction) => {
+const onReactions = (e, id) => {
   const targetClass = e.target.__vueParentComponent.attrs.class;
   if (
     targetClass.includes('add-reaction-img') ||
