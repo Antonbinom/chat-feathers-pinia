@@ -24,7 +24,14 @@
                 text-color='black',
                 dense
               ) {{ `${reaction.smile} ${reaction.count}` }}
-
+                q-tooltip(
+                  anchor='bottom middle',
+                  self='top middle',
+                  :offset='[10, 10]'
+                )
+                  p
+                    b(v-for='(user, index) in reaction.users', :key='user._id') {{ `${user.name}, ` }}
+                    b {{ ` :Поставили ${reaction.smile}` }}
               q-btn.q-py-none.q-mr-sm.add-reaction(
                 @click='onReactions($event, message._id)',
                 color='transparent',
@@ -161,7 +168,7 @@ const createReaction = async (i, r) => {
         id: r,
         smile: i,
         count: 1,
-        users: [authStore.getUser._id],
+        users: [authStore.getUser],
       },
     },
   });
@@ -169,9 +176,9 @@ const createReaction = async (i, r) => {
 
 const addReaction = async (reaction) => {
   const { id, count, users } = reaction;
-  if (users.includes(authStore.getUser._id)) return;
+  if (users.find((item) => item._id === authStore.getUser._id)) return;
 
-  const usersArr = [...users, authStore.getUser._id];
+  const usersArr = [...users, authStore.getUser];
   const query = { 'reactions.id': id };
 
   await messagesStore.patch(
@@ -186,7 +193,9 @@ const addReaction = async (reaction) => {
 
 const removeReaction = async (reaction) => {
   const { id, count, users } = reaction;
-  const itemIndex = users.indexOf(authStore.getUser._id);
+  const itemIndex = users.findIndex(
+    (item) => item._id === authStore.getUser._id
+  );
   const query = { 'reactions.id': id };
 
   users.splice(itemIndex, 1);
@@ -217,10 +226,10 @@ const getVariables = () => {
   );
   const { reactions } = messagesItems.value[messageIndex];
   const isUserId = reactions.some((item) =>
-    item.users.includes(authStore.getUser._id)
+    item.users.find((item) => item._id === authStore.getUser._id)
   );
   const reactionIndex = reactions.findIndex((item) =>
-    item.users.includes(authStore.getUser._id)
+    item.users.find((item) => item._id === authStore.getUser._id)
   );
   return { reactions, isUserId, reactionIndex };
 };
