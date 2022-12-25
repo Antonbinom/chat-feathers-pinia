@@ -232,7 +232,6 @@ const onSelectReactions = async ({ i, r }) => {
 
       count > 1 ? removeReaction(reaction) : deleteReaction(id);
     }
-    // если в массиве уже находится эта реакция
     const reaction = reactions.find((el) => el.id === r);
 
     reaction ? addReaction(reaction) : createReaction(i, r);
@@ -242,16 +241,29 @@ const onSelectReactions = async ({ i, r }) => {
 };
 
 const onReactionButton = (msgId, reaction, reactionId, index) => {
-  const { id, users, count } = reaction[index];
-  const currentReaction = reaction[index];
+  // messageId.value = msgId;
+  // const messageIndex = messagesItems.value.findIndex(
+  //   (el) => el._id === messageId.value
+  // );
+  // const { reactions } = messagesItems.value[messageIndex];
 
-  messageId.value = msgId;
+  const isUserId = reaction.some((item) =>
+    item.users.includes(authStore.getUser._id)
+  );
+  if (isUserId) {
+    const reactionIndex = reaction.findIndex((item) =>
+      item.users.includes(authStore.getUser._id)
+    );
+    const currentReaction = reaction[reactionIndex];
+    const { id, users, count } = currentReaction;
 
-  users.includes(authStore.getUser._id)
-    ? count > 1
-      ? removeReaction(currentReaction)
-      : deleteReaction(reactionId)
-    : addReaction(currentReaction);
+    if (currentReaction === reaction[index]) {
+      count > 1 ? removeReaction(currentReaction) : deleteReaction(id);
+    } else {
+      count > 1 ? removeReaction(currentReaction) : deleteReaction(id);
+      addReaction(reaction[index]);
+    }
+  } else addReaction(reaction[index]);
 };
 
 const onReactions = (e, id, reaction) => {
