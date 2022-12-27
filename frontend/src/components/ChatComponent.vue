@@ -14,7 +14,7 @@
             div {{ useMessageTime(message.createdAt) }}
         template(v-slot:default)
           div
-            p {{ message.text }}
+            p.message-text {{ message.text }}
             .reactions-buttons
               q-btn.q-py-none.q-mr-sm(
                 v-for='(reaction, index) in message.reactions',
@@ -30,8 +30,9 @@
                   :offset='[10, 10]'
                 )
                   p
-                    b(v-for='(user, index) in reaction.users', :key='user._id') {{ `${user.name}, ` }}
-                    b {{ ` :Поставили ${reaction.smile}` }}
+                    b(v-for='(user, index) in reaction.users', :key='index') {{ `${user._id === authStore.getUser._id ? "Вы" : user.name}${index + 2 === reaction.users.length ? " и " : index + 1 < reaction.users.length ? ", " : ""}` }}
+                    br
+                    b {{ ` :${reaction.users.length > 1 ? "Поставили" : "Поставил"} ${reaction.smile}` }}
               q-btn.q-py-none.q-mr-sm.add-reaction(
                 @click='onReactions($event, message._id)',
                 color='transparent',
@@ -39,36 +40,49 @@
                 dense
               )
                 q-img.add-reaction-img(src='../assets/smile-plus.svg')
-      EmojiPicker.reactions(
-        v-if='isReactionPicker',
-        @select='onSelectReactions',
-        :native='true',
-        :hide-group-names='true',
-        :hide-group-icons='true',
-        :disabled-groups='["animals_nature", "food_drink", "activities", "travel_places", "objects", "symbols", "flags"]',
-        :disable-sticky-group-names='true',
-        :disable-skin-tones='true',
-        :static-texts='{ placeholder: "Поиск..." }'
-      )
-  EmojiPicker.fixed-bottom.emoji(
-    v-show='isEmojiPicker',
-    @select='onSelectEmoji',
-    :native='true',
-    :hide-group-names='true',
-    :hide-group-icons='true',
-    :disable-sticky-group-names='true',
-    :disable-skin-tones='true',
-    :static-texts='{ placeholder: "Поиск..." }'
-  )
-
-  form.q-pa-md.fixed-bottom.bg-white(@submit.prevent='sendMessage')
-    q-input.row.justify-end(v-model='messageData.text')
+                  q-menu
+                    EmojiPicker.reactions(
+                      clickable,
+                      v-close-popup,
+                      @select='onSelectReactions',
+                      :native='true',
+                      :hide-group-names='true',
+                      :hide-group-icons='true',
+                      :disabled-groups='["animals_nature", "food_drink", "activities", "travel_places", "objects", "symbols", "flags"]',
+                      :disable-sticky-group-names='true',
+                      :disable-skin-tones='true',
+                      :static-texts='{ placeholder: "Поиск..." }'
+                    )
+          //- pre {{ message.reactions }}
+  form.row.q-pa-md.fixed-bottom.bg-white(@submit.prevent='sendMessage')
+    q-file(
+      name='poster_file',
+      v-model='file',
+      label='Файл',
+      style='width: 10%'
+    )
+      template(v-slot:prepend)
+        q-icon(name='attach_file')
+    q-input.row.justify-end.message-input(
+      v-model='messageData.text',
+      style='width: 90%'
+    )
       q-btn.q-pa-none.q-mr-sm(
         @click='isEmojiPicker = !isEmojiPicker',
         style='width: 56px',
         unelevated
       )
         q-img(src='../assets/smile.svg')
+          q-menu
+            EmojiPicker(
+              @select='onSelectEmoji',
+              :native='true',
+              :hide-group-names='true',
+              :hide-group-icons='true',
+              :disable-sticky-group-names='true',
+              :disable-skin-tones='true',
+              :static-texts='{ placeholder: "Поиск..." }'
+            )
       q-btn(type='submit', label='Отправить', color='primary')
 </template>
 
@@ -168,7 +182,7 @@ const createReaction = async (i, r) => {
         id: r,
         smile: i,
         count: 1,
-        users: [authStore.getUser],
+        users: [authStore.getUser._id],
       },
     },
   });
@@ -176,11 +190,9 @@ const createReaction = async (i, r) => {
 
 const addReaction = async (reaction) => {
   const { id, count, users } = reaction;
-  if (users.find((item) => item._id === authStore.getUser._id)) return;
-
-  const usersArr = [...users, authStore.getUser];
+  if (users.includes(authStore.getUser._id)) return;
+  const usersArr = [...users, authStore.getUser._id];
   const query = { 'reactions.id': id };
-
   await messagesStore.patch(
     messageId.value,
     {
@@ -197,7 +209,6 @@ const removeReaction = async (reaction) => {
     (item) => item._id === authStore.getUser._id
   );
   const query = { 'reactions.id': id };
-
   users.splice(itemIndex, 1);
 
   await messagesStore.patch(
@@ -226,10 +237,10 @@ const getVariables = () => {
   );
   const { reactions } = messagesItems.value[messageIndex];
   const isUserId = reactions.some((item) =>
-    item.users.find((item) => item._id === authStore.getUser._id)
+    item.users.find((user) => user._id === authStore.getUser._id)
   );
   const reactionIndex = reactions.findIndex((item) =>
-    item.users.find((item) => item._id === authStore.getUser._id)
+    item.users.find((user) => user._id === authStore.getUser._id)
   );
   return { reactions, isUserId, reactionIndex };
 };
@@ -296,21 +307,10 @@ onMounted(() => {
   background-color: transparent
 .q-message-name--sent .message-header
   justify-content: flex-end
-
-.emoji
-  position: absolute
-  margin: 0
-  right: 140px
-  left: 140px
-  width: auto
-  bottom: 86px
-  .v3-emojis
-    button
-      flex-basis: 4% !important
-      max-width: 50px !important
-.reactions
-  position: absolute
-  top: 50%
+.message-text
+  font-size: 16px
+.message-input
+  font-size: 16px
 .reactions-buttons
   transition: all ease 0.3s
 .reactions-buttons:hover

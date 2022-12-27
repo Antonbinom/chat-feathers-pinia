@@ -16,7 +16,17 @@ export default function (app: Application): Model<any> {
       require: true,
     },
     text: { type: String, required: true },
-    reactions: { type: Array },
+    reactions: [{
+      id: String,
+      smile: String,
+      count: Number,
+      users: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'users',
+        }
+      ]
+    }],
   }, {
     timestamps: true
   });

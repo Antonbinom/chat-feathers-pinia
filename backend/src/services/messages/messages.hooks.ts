@@ -4,7 +4,7 @@ export default {
   before: {
     all: [
       (ctx: any) => {
-        ctx.params.query.$populate = ['sender'];
+        ctx.params.query.$populate = ['sender', 'reactions.users'];
         return ctx;
       },
     ],

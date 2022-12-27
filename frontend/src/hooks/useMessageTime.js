@@ -1,13 +1,10 @@
 export const useMessageTime = (date) => {
-  const messageDate = new Date(date);
+  const messageDate = new Date(date).toLocaleDateString();
+  const messageTime = new Date(date).toLocaleTimeString().slice(0, -3);
+  const time = new Date(date)
   const dateNow = new Date();
-  const year = messageDate.getFullYear();
-  const month = messageDate.getMonth();
-  const day = messageDate.getDate();
-  const hour = messageDate.getHours();
-  const minute = messageDate.getMinutes();
 
-  if (dateNow.getUTCMinutes() === messageDate.getUTCMinutes()) return 'Только что';
-  else if (dateNow - messageDate > 8640000) return `${day}.${month}.${year} ${hour}:${minute}`;
-  else return `${hour}:${minute}`;
+  if (dateNow.getUTCMinutes() === time.getUTCMinutes()) return 'Только что';
+  else if (dateNow - time > 8640000) return `${messageDate} ${messageTime}`;
+  else return `${messageTime}`;
 };
