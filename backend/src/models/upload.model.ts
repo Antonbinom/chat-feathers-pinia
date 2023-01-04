@@ -1,4 +1,4 @@
-// messages-model.ts - A mongoose model
+// upload-model.ts - A mongoose model
 //
 // See http://mongoosejs.com/docs/models.html
 // for more of what you can do here.
@@ -6,28 +6,11 @@ import { Application } from '../declarations';
 import { Model, Mongoose } from 'mongoose';
 
 export default function (app: Application): Model<any> {
-  const modelName = 'messages';
+  const modelName = 'upload';
   const mongooseClient: Mongoose = app.get('mongooseClient');
   const { Schema } = mongooseClient;
   const schema = new Schema({
-    sender: {
-      type: Schema.Types.ObjectId,
-      ref: 'users',
-      require: true,
-    },
-    text: { type: String },
-    files: [{ name: String }],
-    reactions: [{
-      id: String,
-      smile: String,
-      count: Number,
-      users: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'users',
-        }
-      ]
-    }],
+    text: { type: String, required: true }
   }, {
     timestamps: true
   });

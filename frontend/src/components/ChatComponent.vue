@@ -14,8 +14,38 @@
             div {{ useMessageTime(message.createdAt) }}
         template(v-slot:default)
           div
-            p.message-text {{ message.text }}
-            .reactions-buttons
+            p.message-text.q-ma-none {{ message.text }}
+            .row.message__images.justify-center(
+              v-if='message.files.length',
+              :style='message.files.length === 1 ? "width: 300px" : "width: 500px"'
+            )
+              .message__images-item.rounded-borders(
+                v-for='(file, index) in message.files.slice(0, 4)',
+                @click='onImagesPopup(message.files, file.name)',
+                :style='`width: ${imageWidth(message.files.length)}`'
+              )
+                q-img(
+                  v-if='index < 3',
+                  fit='cover',
+                  :ratio='5 / 4',
+                  position='0 0',
+                  :key='file._id',
+                  :src='`http://localhost:3030/uploads/${file.name}` || `../../public/favicon.ico`',
+                  crossorigin='anonymous'
+                )
+                q-img(
+                  v-if='index === 3',
+                  fit='cover',
+                  :ratio='5 / 4',
+                  position='0 0',
+                  :key='file._id',
+                  :src='`http://localhost:3030/uploads/${file.name}` || `../../public/favicon.ico`',
+                  crossorigin='anonymous'
+                )
+                  .absolute-full.text-subtitle2.flex.flex-center
+                    h3 {{ `+${message.files.length - 4}` }}
+
+            .reactions-buttons.q-mt-sm
               q-btn.q-py-none.q-mr-sm(
                 v-for='(reaction, index) in message.reactions',
                 @click='onReactionButton(message._id, index)',
@@ -53,17 +83,19 @@
                       :disable-skin-tones='true',
                       :static-texts='{ placeholder: "Поиск..." }'
                     )
-          //- pre {{ message.reactions }}
-  form.row.q-pa-md.fixed-bottom.bg-white(@submit.prevent='sendMessage')
-    q-file(
-      name='poster_file',
-      v-model='file',
+  q-form.row.q-pa-md.fixed-bottom.bg-white(@submit='sendMessage')
+    input(
+      name='files',
+      @change='handleFileUpload',
       label='Файл',
+      type='file',
+      multiple,
+      append,
+      counter,
       style='width: 10%'
     )
-      template(v-slot:prepend)
-        q-icon(name='attach_file')
     q-input.row.justify-end.message-input(
+      name='text',
       v-model='messageData.text',
       style='width: 90%'
     )
@@ -84,6 +116,25 @@
               :static-texts='{ placeholder: "Поиск..." }'
             )
       q-btn(type='submit', label='Отправить', color='primary')
+
+q-dialog(v-model='imagesPopup')
+  q-carousel(
+    fullscreen,
+    swipeable,
+    animated,
+    v-model='slide',
+    thumbnails,
+    infinite,
+    style='width: 100%'
+  )
+    q-carousel-slide(
+      v-for='file in messageData.files',
+      :key='file._id',
+      :name='file.name',
+      :img-src='`../../public/uploads/${file.name}`',
+      crossorigin='anonymous',
+      @click='imagesPopup = false'
+    )
 </template>
 
 <script setup lang="ts">
@@ -95,8 +146,9 @@ import sendMessageSound from 'src/assets/send.mp3';
 import getMessageSound from 'src/assets/get.mp3';
 import EmojiPicker from 'vue3-emoji-picker';
 import { useMessageTime } from 'src/hooks/useMessageTime';
-import 'vue3-emoji-picker/css';
+import { api } from 'src/boot/axios';
 
+import 'vue3-emoji-picker/css';
 // import css
 import 'vue3-emoji-picker/css';
 // import css
@@ -112,7 +164,14 @@ const soundSend = useSound(sendMessageSound);
 const messageData = ref({
   sender: authStore.getUser._id,
   text: '',
+  files: [],
 });
+const imagesPopup = ref(false);
+const slide = ref('');
+const submitEmpty = ref(false);
+const submitResult = ref([]);
+
+const files = ref([]);
 const messageId = ref('');
 const messagesLimit = ref(15);
 const user = ref(messageData.value.sender);
@@ -133,12 +192,34 @@ const messagesItems = computed(() => {
 });
 
 // --- Methods ---
-const sendMessage = async () => {
+const handleFileUpload = ({ target }) => {
+  messageData.value.files = [];
+  Object.values(target.files).forEach((file) =>
+    messageData.value.files.push({
+      name: `${new Date().toISOString().slice(0, -8)}${file.name}`,
+    })
+  );
+};
+
+const onImagesPopup = (files, name) => {
+  imagesPopup.value = true;
+  messageData.value.files = files;
+  slide.value = name;
+};
+
+const imageWidth = (length) => {
+  if (length === 1) return '98%';
+  else if (length === 3) return '32%';
+};
+
+const sendMessage = async (event) => {
   const createMessage = messagesStore.Model;
   const message = new createMessage(messageData.value);
   const newMessage = await message.save();
 
   messageData.value.text = '';
+
+  await api.post('http://localhost:3030/upload', new FormData(event.target));
 };
 
 const scroll = () => {
@@ -311,6 +392,18 @@ onMounted(() => {
   font-size: 16px
 .message-input
   font-size: 16px
+.message__images
+  width: 500px
+  gap: 10px
+.message__images-item
+  width: 49%
+  height: auto
+  cursor: pointer
+  &:nth-child(4)
+    b
+
+      background-color: #fff
+
 .reactions-buttons
   transition: all ease 0.3s
 .reactions-buttons:hover

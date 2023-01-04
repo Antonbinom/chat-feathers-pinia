@@ -22,7 +22,6 @@ export default function (app: Application): void {
 
   // Initialize our service with any options it requires
   app.use('/messages', new Messages(options, app));
-
   // Get our initialized service so that we can register hooks
   const service = app.service('messages');
 
